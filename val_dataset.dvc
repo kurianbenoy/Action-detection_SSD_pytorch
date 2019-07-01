@@ -1,0 +1,8 @@
+md5: a7717a798b27e0a0bf99cbbc88ded96e
+wdir: .
+outs:
+- md5: 9af545757f43735b22ffbac410c0b751.dir
+  path: val_dataset
+  cache: true
+  metric: false
+  persist: false

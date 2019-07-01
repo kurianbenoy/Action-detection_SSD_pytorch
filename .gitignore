@@ -23,3 +23,6 @@ __pycache__/
 
 # pyenv
 .python-version
+
+/dataset
+/val_dataset
