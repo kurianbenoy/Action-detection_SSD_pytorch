@@ -2,6 +2,7 @@
 .idea
 log
 models
+.env/
 
 eval_results/
 
