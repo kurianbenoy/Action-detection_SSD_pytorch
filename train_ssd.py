@@ -204,6 +204,7 @@ if __name__ == '__main__':
                                  target_transform=target_transform)
             label_file = os.path.join(args.checkpoint_folder, "voc-model-labels.txt")
             store_labels(label_file, dataset.class_names)
+            print(len(dataset.class_names))
             num_classes = len(dataset.class_names)
         elif args.dataset_type == 'open_images':
             dataset = OpenImagesDataset(dataset_path,
@@ -226,7 +227,7 @@ if __name__ == '__main__':
     logging.info("Prepare Validation datasets.")
     if args.dataset_type == "voc":
         val_dataset = VOCDataset(args.validation_dataset, transform=test_transform,
-                                 target_transform=target_transform, is_test=True)
+                                 target_transform=target_transform, is_test=False)
     elif args.dataset_type == 'open_images':
         val_dataset = OpenImagesDataset(dataset_path,
                                         transform=test_transform, target_transform=target_transform,
@@ -318,14 +319,14 @@ if __name__ == '__main__':
         train(train_loader, net, criterion, optimizer,
               device=DEVICE, debug_steps=args.debug_steps, epoch=epoch)
         
-        if epoch % args.validation_epochs == 0 or epoch == args.num_epochs - 1:
-            val_loss, val_regression_loss, val_classification_loss = test(val_loader, net, criterion, DEVICE)
-            logging.info(
-                f"Epoch: {epoch}, " +
-                f"Validation Loss: {val_loss:.4f}, " +
-                f"Validation Regression Loss {val_regression_loss:.4f}, " +
-                f"Validation Classification Loss: {val_classification_loss:.4f}"
-            )
-            model_path = os.path.join(args.checkpoint_folder, f"{args.net}-Epoch-{epoch}-Loss-{val_loss}.pth")
-            net.save(model_path)
-            logging.info(f"Saved model {model_path}")
+        # if epoch % args.validation_epochs == 0 or epoch == args.num_epochs - 1:
+        #     # val_loss, val_regression_loss, val_classification_loss = test(val_loader, net, criterion, DEVICE)
+        #     logging.info(
+        #         f"Epoch: {epoch}, " +
+        #         f"Validation Loss: {val_loss:.4f}, " +
+        #         f"Validation Regression Loss {val_regression_loss:.4f}, " +
+        #         f"Validation Classification Loss: {val_classification_loss:.4f}"
+        #     )
+        model_path = os.path.join(args.checkpoint_folder, f"{args.net}-Epoch-{epoch}-Loss-{val_loss}.pth")
+        net.save(model_path)
+        logging.info(f"Saved model {model_path}")

@@ -8,7 +8,7 @@ import os
 
 class VOCDataset:
 
-    def __init__(self, root, transform=None, target_transform=None, is_test=False, keep_difficult=False, label_file=None):
+    def __init__(self, root, transform=None, target_transform=None, is_test=False, keep_difficult=True, label_file=None):
         """Dataset for VOC data.
         Args:
             root: the root of the VOC2007 or VOC2012 dataset, the directory contains the following sub-directories:
@@ -17,6 +17,7 @@ class VOCDataset:
         self.root = pathlib.Path(root)
         self.transform = transform
         self.target_transform = target_transform
+        self.keep_difficult = keep_difficult
         if is_test:
             image_sets_file = self.root / "ImageSplits/test.txt"
         else:
@@ -43,6 +44,7 @@ class VOCDataset:
 
         else:
             logging.info("No labels file, using default VOC classes.")
+
             self.class_names = ('applauding', 'blowing_bubbles', 'brushing_teeth',
              'cleaning_the_floor', 'climbing', 'cooking', 'cutting_trees', 
              'cutting_vegetables', 'drinking', 'feeding_a_horse', 'fishing', 
@@ -57,7 +59,7 @@ class VOCDataset:
 
     def __getitem__(self, index):
         image_id = self.ids[index]
-        boxes, labels = self._get_annotation(image_id)
+        boxes, labels, is_difficult = self._get_annotation(image_id)
         image = self._read_image(image_id)
         if self.transform:
             image, boxes, labels = self.transform(image, boxes, labels)
@@ -110,7 +112,7 @@ class VOCDataset:
 
         return (np.array(boxes, dtype=np.float32),
                 np.array(labels, dtype=np.int64),
-                )
+                np.array(is_difficult, dtype=np.uint8))
 
     def _read_image(self, image_id):
         image_file = self.root / f"JPEGImages/{image_id}.jpg"
