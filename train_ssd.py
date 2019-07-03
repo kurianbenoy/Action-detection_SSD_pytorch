@@ -138,6 +138,7 @@ def train(loader, net, criterion, optimizer, device, debug_steps=100, epoch=-1):
                 f"Average Regression Loss {avg_reg_loss:.4f}, " +
                 f"Average Classification Loss: {avg_clf_loss:.4f}"
             )
+            
             running_loss = 0.0
             running_regression_loss = 0.0
             running_classification_loss = 0.0
@@ -250,6 +251,7 @@ if __name__ == '__main__':
         freeze_net_layers(net.base_net)
         params = itertools.chain(net.source_layer_add_ons.parameters(), net.extras.parameters(),
                                  net.regression_headers.parameters(), net.classification_headers.parameters())
+        print(params)
         params = [
             {'params': itertools.chain(
                 net.source_layer_add_ons.parameters(),
@@ -288,7 +290,7 @@ if __name__ == '__main__':
         net.init_from_base_net(args.base_net)
     elif args.pretrained_ssd:
         logging.info(f"Init from pretrained ssd {args.pretrained_ssd}")
-        net.init_from_pretrained_ssd(args.pretrained_ssd)
+        print(net.init_from_pretrained_ssd(args.pretrained_ssd))
     logging.info(f'Took {timer.end("Load Model"):.2f} seconds to load the model.')
 
     net.to(DEVICE)
@@ -319,14 +321,14 @@ if __name__ == '__main__':
         train(train_loader, net, criterion, optimizer,
               device=DEVICE, debug_steps=args.debug_steps, epoch=epoch)
         
-        # if epoch % args.validation_epochs == 0 or epoch == args.num_epochs - 1:
-        #     # val_loss, val_regression_loss, val_classification_loss = test(val_loader, net, criterion, DEVICE)
-        #     logging.info(
-        #         f"Epoch: {epoch}, " +
-        #         f"Validation Loss: {val_loss:.4f}, " +
-        #         f"Validation Regression Loss {val_regression_loss:.4f}, " +
-        #         f"Validation Classification Loss: {val_classification_loss:.4f}"
-        #     )
+        if epoch % args.validation_epochs == 0 or epoch == args.num_epochs - 1:
+            val_loss, val_regression_loss, val_classification_loss = test(val_loader, net, criterion, DEVICE)
+            logging.info(
+                f"Epoch: {epoch}, " +
+                f"Validation Loss: {val_loss:.4f}, " +
+                f"Validation Regression Loss {val_regression_loss:.4f}, " +
+                f"Validation Classification Loss: {val_classification_loss:.4f}"
+            )
         model_path = os.path.join(args.checkpoint_folder, f"{args.net}-Epoch-{epoch}-Loss-{val_loss}.pth")
         net.save(model_path)
         logging.info(f"Saved model {model_path}")

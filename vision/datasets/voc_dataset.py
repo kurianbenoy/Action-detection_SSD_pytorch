@@ -8,7 +8,7 @@ import os
 
 class VOCDataset:
 
-    def __init__(self, root, transform=None, target_transform=None, is_test=False, keep_difficult=True, label_file=None):
+    def __init__(self, root, transform=None, target_transform=None, is_test=False, label_file=None):
         """Dataset for VOC data.
         Args:
             root: the root of the VOC2007 or VOC2012 dataset, the directory contains the following sub-directories:
@@ -17,7 +17,7 @@ class VOCDataset:
         self.root = pathlib.Path(root)
         self.transform = transform
         self.target_transform = target_transform
-        self.keep_difficult = keep_difficult
+      #  self.keep_difficult = True
         if is_test:
             image_sets_file = self.root / "ImageSplits/test.txt"
         else:
@@ -59,7 +59,7 @@ class VOCDataset:
 
     def __getitem__(self, index):
         image_id = self.ids[index]
-        boxes, labels, is_difficult = self._get_annotation(image_id)
+        boxes, labels = self._get_annotation(image_id)
         image = self._read_image(image_id)
         if self.transform:
             image, boxes, labels = self.transform(image, boxes, labels)
@@ -94,7 +94,6 @@ class VOCDataset:
         objects = ET.parse(annotation_file).findall("object")
         boxes = []
         labels = []
-        is_difficult = []
         for object in objects:
             class_name = object.find('action').text.lower().strip()
             # we're only concerned with clases in our list
@@ -111,8 +110,7 @@ class VOCDataset:
                 labels.append(self.class_dict[class_name])
 
         return (np.array(boxes, dtype=np.float32),
-                np.array(labels, dtype=np.int64),
-                np.array(is_difficult, dtype=np.uint8))
+                np.array(labels, dtype=np.int64))
 
     def _read_image(self, image_id):
         image_file = self.root / f"JPEGImages/{image_id}.jpg"
