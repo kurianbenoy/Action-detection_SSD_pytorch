@@ -8,7 +8,7 @@ import os
 
 class VOCDataset:
 
-    def __init__(self, root, transform=None, target_transform=None, is_test=False, label_file=None):
+    def __init__(self, root, transform=None, target_transform=None, is_test=False, keep_difficult=False, label_file=None):
         """Dataset for VOC data.
         Args:
             root: the root of the VOC2007 or VOC2012 dataset, the directory contains the following sub-directories:
@@ -17,12 +17,12 @@ class VOCDataset:
         self.root = pathlib.Path(root)
         self.transform = transform
         self.target_transform = target_transform
-      #  self.keep_difficult = True
         if is_test:
-            image_sets_file = self.root / "ImageSplits/test.txt"
+            image_sets_file = self.root / "ImageSets/Main/test.txt"
         else:
-            image_sets_file = self.root / "ImageSplits/train.txt"
+            image_sets_file = self.root / "ImageSets/Main/trainval.txt"
         self.ids = VOCDataset._read_image_ids(image_sets_file)
+        self.keep_difficult = keep_difficult
 
         # if the labels file exists, read in the class names
         label_file_name = self.root / "labels.txt"
@@ -44,22 +44,22 @@ class VOCDataset:
 
         else:
             logging.info("No labels file, using default VOC classes.")
-
-            self.class_names = ('applauding', 'blowing_bubbles', 'brushing_teeth',
-             'cleaning_the_floor', 'climbing', 'cooking', 'cutting_trees', 
-             'cutting_vegetables', 'drinking', 'feeding_a_horse', 'fishing', 
-             'fixing_a_bike', 'fixing_a_car', 'gardening', 'holding_an_umbrella',
-             'jumping', 'looking_through_a_microscope', 'looking_through_a_telescope',
-   'playing_guitar', 'playing_violin', 'pouring_liquid', 'pushing_a_cart', 
-'reading', 'phoning', 'riding_a_bike', 'riding_a_horse', 'rowing_a_boat', 
-'running', 'shooting_an_arrow', 'smoking', 'taking_photos', 'texting_message', 'throwing_frisby', 'using_a_computer', 'walking_the_dog', 'washing_dishes', 'watching_tv', 'waving_hands', 'writing_on_a_board', 'writing_on_a_book', )
+            self.class_names = ('BACKGROUND',
+            'aeroplane', 'bicycle', 'bird', 'boat',
+            'bottle', 'bus', 'car', 'cat', 'chair',
+            'cow', 'diningtable', 'dog', 'horse',
+            'motorbike', 'person', 'pottedplant',
+            'sheep', 'sofa', 'train', 'tvmonitor')
 
 
         self.class_dict = {class_name: i for i, class_name in enumerate(self.class_names)}
 
     def __getitem__(self, index):
         image_id = self.ids[index]
-        boxes, labels = self._get_annotation(image_id)
+        boxes, labels, is_difficult = self._get_annotation(image_id)
+        if not self.keep_difficult:
+            boxes = boxes[is_difficult == 0]
+            labels = labels[is_difficult == 0]
         image = self._read_image(image_id)
         if self.transform:
             image, boxes, labels = self.transform(image, boxes, labels)
@@ -86,16 +86,17 @@ class VOCDataset:
         ids = []
         with open(image_sets_file) as f:
             for line in f:
-                ids.append(line.rstrip().split('.')[0])
+                ids.append(line.rstrip())
         return ids
 
     def _get_annotation(self, image_id):
-        annotation_file = self.root / f"XMLAnnotations/{image_id}.xml"
+        annotation_file = self.root / f"Annotations/{image_id}.xml"
         objects = ET.parse(annotation_file).findall("object")
         boxes = []
         labels = []
+        is_difficult = []
         for object in objects:
-            class_name = object.find('action').text.lower().strip()
+            class_name = object.find('name').text.lower().strip()
             # we're only concerned with clases in our list
             if class_name in self.class_dict:
                 bbox = object.find('bndbox')
@@ -108,13 +109,20 @@ class VOCDataset:
                 boxes.append([x1, y1, x2, y2])
 
                 labels.append(self.class_dict[class_name])
+                is_difficult_str = object.find('difficult').text
+                is_difficult.append(int(is_difficult_str) if is_difficult_str else 0)
 
         return (np.array(boxes, dtype=np.float32),
-                np.array(labels, dtype=np.int64))
+                np.array(labels, dtype=np.int64),
+                np.array(is_difficult, dtype=np.uint8))
 
     def _read_image(self, image_id):
         image_file = self.root / f"JPEGImages/{image_id}.jpg"
         image = cv2.imread(str(image_file))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return image
+
+
+
+
         
