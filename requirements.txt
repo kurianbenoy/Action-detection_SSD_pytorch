@@ -22,7 +22,7 @@ kaggle==1.5.4
 nanotime==0.5.2
 networkx==2.3
 numpy==1.16.4
-opencv-python==4.1.0.25
+opencv-python==4.1.1.26
 pandas==0.24.2
 pathspec==0.5.9
 Pillow==6.2.0
