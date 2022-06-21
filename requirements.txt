@@ -21,7 +21,7 @@ jsonpath-ng==1.4.3
 kaggle==1.5.4
 nanotime==0.5.2
 networkx==2.3
-numpy==1.16.4
+numpy==1.22.0
 opencv-python==4.1.0.25
 pandas==0.24.2
 pathspec==0.5.9
